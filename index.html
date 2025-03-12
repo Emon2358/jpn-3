@@ -87,27 +87,47 @@
       opacity: 1;
       transform: translateY(0);
     }
+    /* ★リポジトリカードの見た目をリッチ＆クールに★ */
     .repo {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.1));
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
       padding: 20px;
       width: 280px;
       scroll-snap-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .repo::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #ffffff, #00ffff, #ffffff);
+      filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+    .repo:hover::before {
+      opacity: 1;
     }
     .repo:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 10px 20px rgba(255, 255, 255, 0.3);
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 15px 30px rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.8);
     }
     .repo h2 {
       font-size: 1.5em;
       margin-bottom: 10px;
-      text-shadow: 0 0 5px #fff;
+      text-shadow: 0 0 8px #fff;
     }
     .repo p {
       font-size: 1em;
-      text-shadow: 0 0 3px #fff;
+      text-shadow: 0 0 4px #fff;
     }
     .repo a {
       text-decoration: none;
