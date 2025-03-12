@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Neon Profile</title>
+  <style>
+    /* リセット */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    /* 背景画像設定 */
+    body {
+      background: url('https://i.pinimg.com/736x/4b/15/8f/4b158fd688bc7dd8eb5b0e679714de77.jpg') no-repeat center center fixed;
+      background-size: cover;
+      position: relative;
+    }
+    /* 黒のオーバーレイ */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85); /* 黒ベース */
+      z-index: 1;
+      overflow: hidden;
+    }
+    /* 虹のグラデーションアニメーション */
+    .overlay::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      opacity: 0.2;
+      animation: gradientAnimation 15s ease infinite;
+      z-index: 2;
+    }
+    @keyframes gradientAnimation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* コンテンツエリア */
+    .content {
+      position: relative;
+      z-index: 3;
+      padding: 50px 20px;
+      text-align: center;
+    }
+    /* ヘッダー等のネオンテキスト */
+    h1 {
+      font-size: 3em;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    }
+    p {
+      font-size: 1.2em;
+      text-shadow: 0 0 5px #fff;
+    }
+    /* リポジトリ表示セクション */
+    .repos {
+      margin-top: 80px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    /* アニメーションON */
+    .repos.animate {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .repo {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      width: 280px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .repo:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 20px rgba(255, 255, 255, 0.3);
+    }
+    .repo h2 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      text-shadow: 0 0 5px #fff;
+    }
+    .repo p {
+      font-size: 1em;
+      text-shadow: 0 0 3px #fff;
+    }
+    /* リンクのネオン風スタイル */
+    .repo a {
+      text-decoration: none;
+      color: #fff;
+      transition: color 0.3s;
+    }
+    .repo a:hover {
+      color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <!-- 黒背景と虹グラデーションのオーバーレイ -->
+  <div class="overlay"></div>
+
+  <!-- メインコンテンツ -->
+  <div class="content">
+    <h1>My Neon Profile</h1>
+    <p>Welcome to my profile site.</p>
+    
+    <!-- リポジトリセクション（スクロールで表示） -->
+    <div class="repos">
+      <!-- 初期状態は空。GitHub APIから取得したリポジトリ情報で動的に要素を生成します -->
+    </div>
+  </div>
+
+  <!-- スクロール時にリポジトリセクションにアニメーションを付与し、GitHub APIからpinnedリポジトリを動的に取得 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const reposSection = document.querySelector('.repos');
+
+      // IntersectionObserverでスクロール時に表示アニメーション
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            reposSection.classList.add('animate');
+            observer.unobserve(reposSection);
+          }
+        });
+      }, { threshold: 0.5 });
+      observer.observe(reposSection);
+
+      // ※GitHub API連携の例（pinnedリポジトリを動的に取得する場合）
+      // ※非公式のAPIサービス「gh-pinned-repos」を利用しています
+      const username = 'Emon2358'; // ここをご自身のGitHubユーザー名に変更してください
+      fetch(`https://gh-pinned-repos.egoist.dev/?username=${username}`)
+        .then(response => response.json())
+        .then(data => {
+          // 取得したデータでリポジトリ要素を生成
+          reposSection.innerHTML = ''; // 初期のサンプル要素があればクリア
+          data.forEach(repo => {
+            const repoElement = document.createElement('div');
+            repoElement.classList.add('repo');
+            
+            // リポジトリタイトル（リンク付き）
+            const title = document.createElement('h2');
+            const link = document.createElement('a');
+            link.href = repo.link;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = repo.repo;
+            title.appendChild(link);
+            
+            // リポジトリ説明
+            const description = document.createElement('p');
+            description.textContent = repo.description || 'No description provided.';
+            
+            // 要素を組み立て
+            repoElement.appendChild(title);
+            repoElement.appendChild(description);
+            reposSection.appendChild(repoElement);
+          });
+        })
+        .catch(error => console.error('Error fetching pinned repos:', error));
+    });
+  </script>
+</body>
+</html>
