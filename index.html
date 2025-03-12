@@ -70,24 +70,22 @@
       font-size: 1.2em;
       text-shadow: 0 0 5px #fff;
     }
-    /* リポジトリ表示セクション（横スライダー） */
+    /* リポジトリ表示セクション（縦並び・中央配置、横スライドアニメーション） */
     .repos {
       margin-top: 80px;
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
+      align-items: center;
       gap: 20px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      padding-bottom: 20px;
       opacity: 0;
-      transform: translateY(50px);
+      transform: translateX(-100%);
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
     .repos.animate {
       opacity: 1;
-      transform: translateY(0);
+      transform: translateX(0);
     }
-    /* ★リポジトリカードの見た目をリッチ＆クールに★ */
+    /* ★リポジトリカードのデザイン★（rich＆coolな見た目） */
     .repo {
       position: relative;
       overflow: hidden;
@@ -96,7 +94,6 @@
       border-radius: 12px;
       padding: 20px;
       width: 280px;
-      scroll-snap-align: center;
       transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     }
     .repo::before {
@@ -137,7 +134,7 @@
     .repo a:hover {
       color: #ddd;
     }
-    /* DNA 3Dアニメーション用キャンバス（左・右固定） */
+    /* DNA 3Dアニメーション用キャンバス（左右固定） */
     #dna-container-left,
     #dna-container-right {
       position: fixed;
@@ -156,7 +153,7 @@
   </style>
 </head>
 <body>
-  <!-- DNAアニメーション用キャンバス（左・右） -->
+  <!-- DNAアニメーション用キャンバス（左右） -->
   <div id="dna-container-left"></div>
   <div id="dna-container-right"></div>
   
@@ -168,7 +165,7 @@
     <h1>My Neon Profile</h1>
     <p>Welcome to my profile site.</p>
     
-    <!-- リポジトリセクション（横スライダー） -->
+    <!-- リポジトリセクション（縦並び・中央配置） -->
     <div class="repos">
       <!-- ここは公式APIから取得したリポジトリ情報で動的に要素を生成 -->
     </div>
@@ -192,7 +189,7 @@
 
       // GitHub公式APIを利用して全リポジトリを取得し、ランダムに5件表示
       const username = 'Emon2358'; // 例: 'Emon2358' に変更
-      fetch(`https://api.github.com/users/${username}/repos?per_page=120`)
+      fetch(`https://api.github.com/users/${username}/repos?per_page=100`)
         .then(response => response.json())
         .then(data => {
           if (!Array.isArray(data) || data.length === 0) return;
@@ -225,7 +222,7 @@
     });
   </script>
 
-  <!-- Three.js を使ったDNA 3Dアニメーション（関数化して左右に展開） -->
+  <!-- Three.js を使ったDNA 3Dアニメーション（左右に配置） -->
   <script>
     function initDNA(containerId) {
       const container = document.getElementById(containerId);
@@ -239,7 +236,7 @@
       const dnaGroup = new THREE.Group();
       scene.add(dnaGroup);
       
-      // DNAパラメータ（canvas全体に表示できるよう調整）
+      // DNAパラメータ（全体に表示できるよう調整）
       const helixRadius = 2;
       const helixHeight = 40;
       const turns = 6;
@@ -261,7 +258,7 @@
         helix2Points.push(new THREE.Vector3(x2, y, z2));
       }
       
-      // TubeGeometryで螺旋を生成（ネオン風に輝かせるため emissive 設定）
+      // TubeGeometryで螺旋を生成（ネオン風：emissive設定）
       const tubeRadius = 0.2;
       const radialSegments = 8;
       const tubeMaterial = new THREE.MeshPhongMaterial({ 
