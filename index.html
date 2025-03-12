@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Neon Profile</title>
+  <!-- Three.js ライブラリの読み込み -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     /* リセット */
     * {
@@ -30,7 +32,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.85); /* 黒ベース */
+      background-color: rgba(0, 0, 0, 0.85);
       z-index: 1;
       overflow: hidden;
     }
@@ -70,18 +72,19 @@
       font-size: 1.2em;
       text-shadow: 0 0 5px #fff;
     }
-    /* リポジトリ表示セクション */
+    /* リポジトリ表示セクション（横スライダー） */
     .repos {
       margin-top: 80px;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-direction: row;
       gap: 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 20px;
       opacity: 0;
       transform: translateY(50px);
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
-    /* アニメーションON */
     .repos.animate {
       opacity: 1;
       transform: translateY(0);
@@ -92,6 +95,7 @@
       border-radius: 8px;
       padding: 20px;
       width: 280px;
+      scroll-snap-align: center;
       transition: transform 0.3s, box-shadow 0.3s;
     }
     .repo:hover {
@@ -107,7 +111,6 @@
       font-size: 1em;
       text-shadow: 0 0 3px #fff;
     }
-    /* リンクのネオン風スタイル */
     .repo a {
       text-decoration: none;
       color: #fff;
@@ -116,9 +119,22 @@
     .repo a:hover {
       color: #ddd;
     }
+    /* DNA 3Dアニメーション用キャンバス（左端固定） */
+    #dna-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 300px;
+      height: 100vh;
+      z-index: 2;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
+  <!-- DNAアニメーション用キャンバス -->
+  <div id="dna-container"></div>
+  
   <!-- 黒背景と虹グラデーションのオーバーレイ -->
   <div class="overlay"></div>
 
@@ -127,18 +143,18 @@
     <h1>My Neon Profile</h1>
     <p>Welcome to my profile site.</p>
     
-    <!-- リポジトリセクション（スクロールで表示） -->
+    <!-- リポジトリセクション（横スライダー） -->
     <div class="repos">
-      <!-- 初期状態は空。GitHub APIから取得したリポジトリ情報で動的に要素を生成します -->
+      <!-- 初期状態は空。GitHub APIから取得したリポジトリ情報で動的に要素を生成 -->
     </div>
   </div>
 
-  <!-- スクロール時にリポジトリセクションにアニメーションを付与し、GitHub APIからpinnedリポジトリを動的に取得 -->
+  <!-- リポジトリセクションのアニメーションおよびGitHub API連携 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const reposSection = document.querySelector('.repos');
 
-      // IntersectionObserverでスクロール時に表示アニメーション
+      // IntersectionObserverでスクロール時に表示アニメーションを付与
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -149,14 +165,12 @@
       }, { threshold: 0.5 });
       observer.observe(reposSection);
 
-      // ※GitHub API連携の例（pinnedリポジトリを動的に取得する場合）
-      // ※非公式のAPIサービス「gh-pinned-repos」を利用しています
-      const username = 'Emon2358'; // ここをご自身のGitHubユーザー名に変更してください
+      // GitHub API連携：非公式の「gh-pinned-repos」APIを利用
+      const username = 'Emon2358'; // ご自身のGitHubユーザー名に変更してください
       fetch(`https://gh-pinned-repos.egoist.dev/?username=${username}`)
         .then(response => response.json())
         .then(data => {
-          // 取得したデータでリポジトリ要素を生成
-          reposSection.innerHTML = ''; // 初期のサンプル要素があればクリア
+          reposSection.innerHTML = '';
           data.forEach(repo => {
             const repoElement = document.createElement('div');
             repoElement.classList.add('repo');
@@ -174,7 +188,6 @@
             const description = document.createElement('p');
             description.textContent = repo.description || 'No description provided.';
             
-            // 要素を組み立て
             repoElement.appendChild(title);
             repoElement.appendChild(description);
             reposSection.appendChild(repoElement);
@@ -182,6 +195,106 @@
         })
         .catch(error => console.error('Error fetching pinned repos:', error));
     });
+  </script>
+
+  <!-- Three.js を使ったDNA 3Dアニメーション -->
+  <script>
+    (function() {
+      const container = document.getElementById('dna-container');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+      
+      // DNAモデル用グループを生成
+      const dnaGroup = new THREE.Group();
+      scene.add(dnaGroup);
+      
+      // DNAパラメータ
+      const helixRadius = 2;
+      const helixHeight = 20;
+      const turns = 4;
+      const segments = 100;
+      const rungInterval = 5;
+      
+      const helix1Points = [];
+      const helix2Points = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * (turns * Math.PI * 2);
+        const y = (i / segments) * helixHeight - helixHeight / 2;
+        // 1本目の螺旋
+        const x1 = helixRadius * Math.cos(t);
+        const z1 = helixRadius * Math.sin(t);
+        helix1Points.push(new THREE.Vector3(x1, y, z1));
+        // 2本目の螺旋（半周ずらす）
+        const x2 = helixRadius * Math.cos(t + Math.PI);
+        const z2 = helixRadius * Math.sin(t + Math.PI);
+        helix2Points.push(new THREE.Vector3(x2, y, z2));
+      }
+      
+      // TubeGeometryを用いて各螺旋を生成
+      const tubeRadius = 0.2;
+      const radialSegments = 8;
+      
+      const helix1Curve = new THREE.CatmullRomCurve3(helix1Points);
+      const helix2Curve = new THREE.CatmullRomCurve3(helix2Points);
+      
+      const helix1Geometry = new THREE.TubeGeometry(helix1Curve, segments, tubeRadius, radialSegments, false);
+      const helix2Geometry = new THREE.TubeGeometry(helix2Curve, segments, tubeRadius, radialSegments, false);
+      
+      const tubeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+      const helix1Mesh = new THREE.Mesh(helix1Geometry, tubeMaterial);
+      const helix2Mesh = new THREE.Mesh(helix2Geometry, tubeMaterial);
+      
+      dnaGroup.add(helix1Mesh);
+      dnaGroup.add(helix2Mesh);
+      
+      // 螺旋同士を接続する塩基対（リボン）を生成
+      for (let i = 0; i <= segments; i += rungInterval) {
+        const point1 = helix1Points[i];
+        const point2 = helix2Points[i];
+        const rungLength = point1.distanceTo(point2);
+        const rungGeometry = new THREE.CylinderGeometry(0.1, 0.1, rungLength, 8);
+        const rungMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const rungMesh = new THREE.Mesh(rungGeometry, rungMaterial);
+        
+        // 2点の中間点に配置
+        const midPoint = new THREE.Vector3().addVectors(point1, point2).multiplyScalar(0.5);
+        rungMesh.position.copy(midPoint);
+        
+        // ラダー方向に合わせる
+        const diff = new THREE.Vector3().subVectors(point2, point1);
+        const axis = new THREE.Vector3(0, 1, 0);
+        rungMesh.quaternion.setFromUnitVectors(axis, diff.clone().normalize());
+        
+        dnaGroup.add(rungMesh);
+      }
+      
+      // ライトの追加
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.position.set(0, 1, 1);
+      scene.add(directionalLight);
+      
+      camera.position.z = 15;
+      
+      function animate() {
+        requestAnimationFrame(animate);
+        dnaGroup.rotation.y += 0.01;
+        renderer.render(scene, camera);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+      });
+    })();
   </script>
 </body>
 </html>
