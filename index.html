@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Neon Profile</title>
+  <title>My github codes</title>
+  <!-- Google Fontsで高級感あるフォントを読み込み -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   <!-- Three.js ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
@@ -18,14 +20,14 @@
     }
     body {
       min-height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Montserrat', sans-serif;
       color: #fff;
       background: url('https://i.pinimg.com/736x/4b/15/8f/4b158fd688bc7dd8eb5b0e679714de77.jpg') no-repeat center center fixed;
       background-size: cover;
       position: relative;
       overflow-x: hidden;
     }
-    /* 背景オーバーレイ：body全体に広がるように */
+    /* 背景オーバーレイ：ページ全体に広がる */
     .overlay {
       position: absolute;
       top: 0;
@@ -137,6 +139,23 @@
     .repo a:hover {
       color: #ddd;
     }
+    /* フッター：ページ最下部に表示、下からフェード＆スライドイン */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.2em;
+      color: #fff;
+      text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 100px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .footer.animate {
+      opacity: 1;
+      transform: translateY(0);
+    }
     /* DNA 3Dアニメーション用キャンバス（左右固定） */
     #dna-container-left,
     #dna-container-right {
@@ -165,33 +184,49 @@
 
   <!-- メインコンテンツ -->
   <div class="content">
-    <h1>My Neon Profile</h1>
-    <p>Welcome to my profile site.</p>
+    <h1>My github codes</h1>
+    <p>Welcome to my github codes.</p>
     
     <!-- リポジトリセクション（縦並び・中央配置） -->
     <div class="repos">
       <!-- GitHub公式APIから取得したリポジトリ情報で動的に要素を生成 -->
     </div>
   </div>
+  
+  <!-- フッター -->
+  <footer class="footer">
+    created by Emon2358
+  </footer>
 
   <!-- リポジトリセクションのアニメーション＆GitHub API連携 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // リポジトリセクションのアニメーション
       const reposSection = document.querySelector('.repos');
-
-      // IntersectionObserverでスクロール時にアニメーション表示
-      const observer = new IntersectionObserver((entries) => {
+      const observerRepos = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             reposSection.classList.add('animate');
-            observer.unobserve(reposSection);
+            observerRepos.unobserve(reposSection);
           }
         });
       }, { threshold: 0.5 });
-      observer.observe(reposSection);
+      observerRepos.observe(reposSection);
+
+      // フッターのアニメーション
+      const footer = document.querySelector('.footer');
+      const observerFooter = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            footer.classList.add('animate');
+            observerFooter.unobserve(footer);
+          }
+        });
+      }, { threshold: 0.5 });
+      observerFooter.observe(footer);
 
       // GitHub公式APIを利用して全リポジトリを取得し、ランダムに5件表示
-      const username = 'Emon2358'; // 例: 'Emon2358' に変更
+      const username = 'Emon2358';
       fetch(`https://api.github.com/users/${username}/repos?per_page=100`)
         .then(response => response.json())
         .then(data => {
