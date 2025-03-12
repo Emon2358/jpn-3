@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Neon Profile</title>
-  <!-- Three.js ライブラリの読み込み -->
+  <!-- Three.js ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     /* リセット */
@@ -25,7 +25,7 @@
       background-size: cover;
       position: relative;
     }
-    /* 黒のオーバーレイ */
+    /* 黒のオーバーレイと虹のグラデーション */
     .overlay {
       position: absolute;
       top: 0;
@@ -36,7 +36,6 @@
       z-index: 1;
       overflow: hidden;
     }
-    /* 虹のグラデーションアニメーション */
     .overlay::after {
       content: '';
       position: absolute;
@@ -55,14 +54,13 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    /* コンテンツエリア */
+    /* メインコンテンツ */
     .content {
       position: relative;
       z-index: 3;
       padding: 50px 20px;
       text-align: center;
     }
-    /* ヘッダー等のネオンテキスト */
     h1 {
       font-size: 3em;
       margin-bottom: 10px;
@@ -119,23 +117,30 @@
     .repo a:hover {
       color: #ddd;
     }
-    /* DNA 3Dアニメーション用キャンバス（左端固定） */
-    #dna-container {
+    /* DNA 3Dアニメーション用キャンバス（左・右固定） */
+    #dna-container-left,
+    #dna-container-right {
       position: fixed;
       top: 0;
-      left: 0;
       width: 300px;
       height: 100vh;
       z-index: 2;
       pointer-events: none;
     }
+    #dna-container-left {
+      left: 0;
+    }
+    #dna-container-right {
+      right: 0;
+    }
   </style>
 </head>
 <body>
-  <!-- DNAアニメーション用キャンバス -->
-  <div id="dna-container"></div>
+  <!-- DNAアニメーション用キャンバス（左・右） -->
+  <div id="dna-container-left"></div>
+  <div id="dna-container-right"></div>
   
-  <!-- 黒背景と虹グラデーションのオーバーレイ -->
+  <!-- 黒背景と虹グラデーション -->
   <div class="overlay"></div>
 
   <!-- メインコンテンツ -->
@@ -145,16 +150,16 @@
     
     <!-- リポジトリセクション（横スライダー） -->
     <div class="repos">
-      <!-- 初期状態は空。GitHub APIから取得したリポジトリ情報で動的に要素を生成 -->
+      <!-- ここは公式APIから取得したリポジトリ情報で動的に要素を生成 -->
     </div>
   </div>
 
-  <!-- リポジトリセクションのアニメーションおよびGitHub API連携 -->
+  <!-- リポジトリセクションのアニメーション＆GitHub API連携 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const reposSection = document.querySelector('.repos');
 
-      // IntersectionObserverでスクロール時に表示アニメーションを付与
+      // IntersectionObserverでスクロール時にアニメーション表示
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -165,23 +170,26 @@
       }, { threshold: 0.5 });
       observer.observe(reposSection);
 
-      // GitHub API連携：非公式の「gh-pinned-repos」APIを利用
-      const username = 'Emon2358'; // ご自身のGitHubユーザー名に変更してください
-      fetch(`https://gh-pinned-repos.egoist.dev/?username=${username}`)
+      // GitHub公式APIを利用して全リポジトリを取得し、ランダムに5件表示
+      const username = 'Emon2358'; // 例: 'Emon2358' に変更
+      fetch(`https://api.github.com/users/${username}/repos?per_page=120`)
         .then(response => response.json())
         .then(data => {
+          if (!Array.isArray(data) || data.length === 0) return;
+          // ランダムに並べ替え、先頭から5件を抽出
+          const selected = data.sort(() => Math.random() - 0.5).slice(0, 5);
           reposSection.innerHTML = '';
-          data.forEach(repo => {
+          selected.forEach(repo => {
             const repoElement = document.createElement('div');
             repoElement.classList.add('repo');
             
-            // リポジトリタイトル（リンク付き）
+            // リポジトリ名（リンク付き）
             const title = document.createElement('h2');
             const link = document.createElement('a');
-            link.href = repo.link;
+            link.href = repo.html_url;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
-            link.textContent = repo.repo;
+            link.textContent = repo.name;
             title.appendChild(link);
             
             // リポジトリ説明
@@ -193,30 +201,30 @@
             reposSection.appendChild(repoElement);
           });
         })
-        .catch(error => console.error('Error fetching pinned repos:', error));
+        .catch(error => console.error('Error fetching repos:', error));
     });
   </script>
 
-  <!-- Three.js を使ったDNA 3Dアニメーション -->
+  <!-- Three.js を使ったDNA 3Dアニメーション（関数化して左右に展開） -->
   <script>
-    (function() {
-      const container = document.getElementById('dna-container');
+    function initDNA(containerId) {
+      const container = document.getElementById(containerId);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ alpha: true });
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
       
-      // DNAモデル用グループを生成
+      // DNAモデル用グループ
       const dnaGroup = new THREE.Group();
       scene.add(dnaGroup);
       
-      // DNAパラメータ
+      // DNAパラメータ（canvas全体に表示できるよう調整）
       const helixRadius = 2;
-      const helixHeight = 20;
-      const turns = 4;
-      const segments = 100;
-      const rungInterval = 5;
+      const helixHeight = 40;
+      const turns = 6;
+      const segments = 200;
+      const rungInterval = 10;
       
       const helix1Points = [];
       const helix2Points = [];
@@ -233,52 +241,54 @@
         helix2Points.push(new THREE.Vector3(x2, y, z2));
       }
       
-      // TubeGeometryを用いて各螺旋を生成
+      // TubeGeometryで螺旋を生成（ネオン風に輝かせるため emissive 設定）
       const tubeRadius = 0.2;
       const radialSegments = 8;
+      const tubeMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xffffff, 
+        emissive: 0xffffff, 
+        emissiveIntensity: 1 
+      });
       
       const helix1Curve = new THREE.CatmullRomCurve3(helix1Points);
       const helix2Curve = new THREE.CatmullRomCurve3(helix2Points);
-      
       const helix1Geometry = new THREE.TubeGeometry(helix1Curve, segments, tubeRadius, radialSegments, false);
       const helix2Geometry = new THREE.TubeGeometry(helix2Curve, segments, tubeRadius, radialSegments, false);
-      
-      const tubeMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
       const helix1Mesh = new THREE.Mesh(helix1Geometry, tubeMaterial);
       const helix2Mesh = new THREE.Mesh(helix2Geometry, tubeMaterial);
-      
       dnaGroup.add(helix1Mesh);
       dnaGroup.add(helix2Mesh);
       
-      // 螺旋同士を接続する塩基対（リボン）を生成
+      // 塩基対（リボン）の生成
       for (let i = 0; i <= segments; i += rungInterval) {
         const point1 = helix1Points[i];
         const point2 = helix2Points[i];
         const rungLength = point1.distanceTo(point2);
         const rungGeometry = new THREE.CylinderGeometry(0.1, 0.1, rungLength, 8);
-        const rungMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        const rungMaterial = new THREE.MeshPhongMaterial({ 
+          color: 0xffffff, 
+          emissive: 0xffffff, 
+          emissiveIntensity: 1 
+        });
         const rungMesh = new THREE.Mesh(rungGeometry, rungMaterial);
-        
-        // 2点の中間点に配置
+        // 中間点に配置
         const midPoint = new THREE.Vector3().addVectors(point1, point2).multiplyScalar(0.5);
         rungMesh.position.copy(midPoint);
-        
-        // ラダー方向に合わせる
+        // 方向調整
         const diff = new THREE.Vector3().subVectors(point2, point1);
         const axis = new THREE.Vector3(0, 1, 0);
         rungMesh.quaternion.setFromUnitVectors(axis, diff.clone().normalize());
-        
         dnaGroup.add(rungMesh);
       }
       
-      // ライトの追加
+      // ライト設定
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
       scene.add(ambientLight);
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
       directionalLight.position.set(0, 1, 1);
       scene.add(directionalLight);
       
-      camera.position.z = 15;
+      camera.position.z = 20;
       
       function animate() {
         requestAnimationFrame(animate);
@@ -294,7 +304,13 @@
         camera.updateProjectionMatrix();
         renderer.setSize(width, height);
       });
-    })();
+    }
+    
+    // 左右のDNAアニメーションを初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      initDNA('dna-container-left');
+      initDNA('dna-container-right');
+    });
   </script>
 </body>
 </html>
